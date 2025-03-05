@@ -5,7 +5,7 @@ from sklearn.feature_selection import SelectFromModel
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.metrics import mean_squared_error, r2_score
 import joblib
 import xgboost as xgb
@@ -43,38 +43,45 @@ xgb_selector = SelectFromModel(selector_xgb, threshold="mean", max_features=10) 
 X_train_selected_xgb = xgb_selector.transform(X_train)
 X_test_selected_xgb = xgb_selector.transform(X_test)
 
-
 X_train_final = X_train_selected_xgb
 X_test_final = X_test_selected_xgb
 
+# 5. ฝึก Linear Regression
+lr_model = LinearRegression()
+lr_model.fit(X_train_final, y_train)
+y_pred_lr = lr_model.predict(X_test_final)
+rmse_lr = np.sqrt(mean_squared_error(y_test, y_pred_lr))
+r2_lr = r2_score(y_test, y_pred_lr)
+print(f"Linear Regression -> RMSE: {rmse_lr:.4f}, R²: {r2_lr:.4f}")
 
-# 5. ฝึก KNN Regressor
-n_neighbors_value = 17  # ปรับได้ตามต้องการ
+# 6. ฝึก Ridge Regression
+ridge_model = Ridge(alpha=10)
+ridge_model.fit(X_train_final, y_train)
+y_pred_ridge = ridge_model.predict(X_test_final)
+rmse_ridge = np.sqrt(mean_squared_error(y_test, y_pred_ridge))
+r2_ridge = r2_score(y_test, y_pred_ridge)
+print(f"Ridge Regression -> RMSE: {rmse_ridge:.4f}, R²: {r2_ridge:.4f}")
+
+# 7. ฝึก KNN Regressor
+n_neighbors_value = 20
 knn_model = KNeighborsRegressor(n_neighbors=n_neighbors_value)
-knn_model.fit(X_train, y_train)
-
-
-
-# Evaluate KNN
-y_pred_knn = knn_model.predict(X_test)
+knn_model.fit(X_train_final, y_train)
+y_pred_knn = knn_model.predict(X_test_final)
 rmse_knn = np.sqrt(mean_squared_error(y_test, y_pred_knn))
 r2_knn = r2_score(y_test, y_pred_knn)
 print(f"KNN -> RMSE: {rmse_knn:.4f}, R²: {r2_knn:.4f}")
 
-# 6. ฝึก Random Forest Regressor
-rf_model = RandomForestRegressor(n_estimators=200, random_state=42)
-rf_model.fit(X_train, y_train)
+# Define the models directory path
+models_dir = r'C:\Users\techa\OneDrive\เอกสาร\VScode\y.2\datamining\web-datamining\Models'
+import os
+os.makedirs(models_dir, exist_ok=True)
 
-# Evaluate Random Forest
-y_pred_rf = rf_model.predict(X_test)
-rmse_rf = np.sqrt(mean_squared_error(y_test, y_pred_rf))
-r2_rf = r2_score(y_test, y_pred_rf)
-print(f"Random Forest -> RMSE: {rmse_rf:.4f}, R²: {r2_rf:.4f}")
-
-# 7. บันทึกโมเดลและ scaler
-joblib.dump(knn_model, 'knn_model.pkl')
-joblib.dump(rf_model, 'rf_model.pkl')
-joblib.dump(scaler, 'scaler.pkl')
-joblib.dump(X.columns, 'feature_columns.pkl')
+# บันทึกโมเดลและ scaler
+joblib.dump(lr_model, os.path.join(models_dir, 'lr_model.pkl'))
+joblib.dump(ridge_model, os.path.join(models_dir, 'ridge_model.pkl'))
+joblib.dump(knn_model, os.path.join(models_dir, 'knn_model.pkl'))
+joblib.dump(scaler, os.path.join(models_dir, 'scaler.pkl'))
+joblib.dump(X.columns, os.path.join(models_dir, 'feature_columns.pkl'))
+joblib.dump(xgb_selector, os.path.join(models_dir, 'feature_selector.pkl'))  # Add this line
 
 print("โมเดลและ scaler ถูกบันทึกเรียบร้อยแล้ว!")

@@ -14,23 +14,26 @@ def check_file_exists(file_path):
         return False
 
 knn_model_path = os.path.join(base_path, 'knn_model.pkl')
-rf_model_path = os.path.join(base_path, 'rf_model.pkl')  # เพิ่ม RF Model
+lr_model_path = os.path.join(base_path, 'lr_model.pkl')  # เพิ่ม RF Model
+ridge_model_path = os.path.join(base_path, 'ridge_model.pkl')  # เพิ่ม ridge_model
 scaler_path = os.path.join(base_path, 'scaler.pkl')
 feature_columns_path = os.path.join(base_path, 'feature_columns.pkl')
 
 knn_model = None
-rf_model = None  # เพิ่มตัวแปร rf_model
+lr_model = None  # เพิ่มตัวแปร lr_model
+ridge_model = None  # เพิ่มตัวแปร ridge_model
 scaler = None
 expected_columns = None
 
 try:
-    if not (check_file_exists(knn_model_path) and check_file_exists(rf_model_path) and 
+    if not (check_file_exists(knn_model_path) and check_file_exists(lr_model_path) and check_file_exists(ridge_model_path)and 
             check_file_exists(scaler_path) and check_file_exists(feature_columns_path)):
         st.error("One or more required files are missing. Please check the file paths.")
         st.stop()
 
     knn_model = joblib.load(knn_model_path)
-    rf_model = joblib.load(rf_model_path)  # โหลด RF Model
+    lr_model = joblib.load(lr_model_path)  # โหลด lf_model
+    ridge_model = joblib.load(ridge_model_path)  # โหลด ridge_model
     scaler = joblib.load(scaler_path)
     expected_columns = joblib.load(feature_columns_path)
     
@@ -83,8 +86,10 @@ def predict_sleep_quality(gender, age, occupation, sleep_duration, physical_acti
     
     if model_choice == "KNN Regression":
         prediction = knn_model.predict(input_scaled)
-    elif model_choice == "Random Forest":
-        prediction = rf_model.predict(input_scaled)
+    elif model_choice == "Linear Regression":
+        prediction = lr_model.predict(input_scaled)  # เปลี่ยนจาก knn_model เป็น lf_model
+    elif model_choice == "Ridge Regression":
+        prediction = ridge_model.predict(input_scaled)
     else:
         st.error("Invalid model choice. Please select a valid model.")
         return None
@@ -106,7 +111,7 @@ with st.form(key='prediction_form'):
     heart_rate = st.number_input("Heart Rate (bpm)", min_value=1, max_value=300, value=70)
     daily_steps = st.number_input("Daily Steps", min_value=0, value=5000)
     sleep_disorder = st.selectbox("Sleep Disorder", ("None", "Insomnia", "Sleep Apnea"))
-    model_choice = st.selectbox("Select Model", ["KNN Regression", "Random Forest"])  # เพิ่มตัวเลือก RF
+    model_choice = st.selectbox("Select Model", ["Ridge Regression","Linear Regression", "KNN Regression"])  # เพิ่มตัวเลือก RF
 
     submit_button = st.form_submit_button(label='Submit')
 
