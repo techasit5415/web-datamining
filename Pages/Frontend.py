@@ -18,16 +18,18 @@ lr_model_path = os.path.join(base_path, 'lr_model.pkl')  # เพิ่ม RF Mo
 ridge_model_path = os.path.join(base_path, 'ridge_model.pkl')  # เพิ่ม ridge_model
 scaler_path = os.path.join(base_path, 'scaler.pkl')
 feature_columns_path = os.path.join(base_path, 'feature_columns.pkl')
+feature_selector_path = os.path.join(base_path, 'feature_selector.pkl')  # Add feature selector path
 
 knn_model = None
 lr_model = None  # เพิ่มตัวแปร lr_model
 ridge_model = None  # เพิ่มตัวแปร ridge_model
 scaler = None
 expected_columns = None
+feature_selector = None  # Add feature selector variable
 
 try:
     if not (check_file_exists(knn_model_path) and check_file_exists(lr_model_path) and check_file_exists(ridge_model_path)and 
-            check_file_exists(scaler_path) and check_file_exists(feature_columns_path)):
+            check_file_exists(scaler_path) and check_file_exists(feature_columns_path) and check_file_exists(feature_selector_path)):
         st.error("One or more required files are missing. Please check the file paths.")
         st.stop()
 
@@ -36,6 +38,7 @@ try:
     ridge_model = joblib.load(ridge_model_path)  # โหลด ridge_model
     scaler = joblib.load(scaler_path)
     expected_columns = joblib.load(feature_columns_path)
+    feature_selector = joblib.load(feature_selector_path)  # Load feature selector
     
     # st.write("Expected Columns:", list(expected_columns))
 except Exception as e:
@@ -82,14 +85,16 @@ def predict_sleep_quality(gender, age, occupation, sleep_duration, physical_acti
     # st.write("Input Encoded:", input_encoded.to_dict(orient='records'))
     
     input_scaled = scaler.transform(input_encoded)
-    # st.write("Input Scaled:", input_scaled.tolist())
+    input_selected = feature_selector.transform(input_scaled)  # Apply feature selection
     
+    # st.write("Input Scaled:", input_scaled.tolist())
+
     if model_choice == "KNN Regression":
-        prediction = knn_model.predict(input_scaled)
+        prediction = knn_model.predict(input_selected)  # Use selected features
     elif model_choice == "Linear Regression":
-        prediction = lr_model.predict(input_scaled)  # เปลี่ยนจาก knn_model เป็น lf_model
+        prediction = lr_model.predict(input_selected)  # Use selected features
     elif model_choice == "Ridge Regression":
-        prediction = ridge_model.predict(input_scaled)
+        prediction = ridge_model.predict(input_selected)  # Use selected features
     else:
         st.error("Invalid model choice. Please select a valid model.")
         return None
@@ -112,9 +117,7 @@ with st.form(key='prediction_form'):
     daily_steps = st.number_input("Daily Steps", min_value=0, value=5000)
     sleep_disorder = st.selectbox("Sleep Disorder", ("None", "Insomnia", "Sleep Apnea"))
     model_choice = st.selectbox("Select Model", ["Ridge Regression","Linear Regression", "KNN Regression"])  # เพิ่มตัวเลือก RF
-
     submit_button = st.form_submit_button(label='Submit')
-
 if submit_button:
     try:
         sys_bp, dia_bp = blood_pressure.split('/')
@@ -129,3 +132,5 @@ if submit_button:
         
         if predicted_quality is not None:
             st.success(f"Predicted Quality of Sleep: {predicted_quality:.2f} (scale: 1-10)")
+
+
