@@ -1,0 +1,1 @@
+{"Gender": "Male", "Age": 30, "Occupation": "Office Worker", "Sleep Duration (hours)": 7.0, "Physical Activity Level (minutes/day)": 60, "Stress Level (scale: 1-10)": 5, "BMI Category": "Underweight", "Blood Pressure (systolic/diastolic)": "120/80", "Heart Rate (bpm)": 70, "Daily Steps": 5000, "Sleep Disorder": "None", "Model Choice": "XGBoost"}
