@@ -10,6 +10,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 import joblib
 import os
 from sklearn.ensemble import RandomForestRegressor
+import xgboost as xgb  # Add XGBoost import
 
 # Load data
 file_path = "C:\\Users\\techa\\Downloads\\sleep_health_lifestyle_dataset.csv"
@@ -73,9 +74,9 @@ X_test_selected = rf_selector.transform(X_test)
 
 # Train models
 models = {
-    'lr_model': LinearRegression(),
-    'ridge_model': Ridge(alpha=10),
-    'knn_model': KNeighborsRegressor(n_neighbors=20)
+    'xgb_model': xgb.XGBRegressor(n_estimators=200, learning_rate=0.05, random_state=42),
+    'rf_model': RandomForestRegressor(n_estimators=200, random_state=42),
+    'ridge_model': Ridge(alpha=10)
 }
 
 # Train and evaluate each model
