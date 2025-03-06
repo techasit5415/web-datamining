@@ -21,6 +21,8 @@ from scipy.stats import randint,uniform
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import plotly.figure_factory as ff
 
 
 # เชื่อมต่อ Google Drive
@@ -454,3 +456,164 @@ plt.legend()
 plt.grid(True)
 plt.tight_layout()
 plt.show()
+
+st.header("Additional Comparative Analysis")
+
+# 1. Model Performance Distribution
+fig_box_perf = go.Figure()
+fig_box_perf.add_trace(go.Box(y=results_df['RMSE'], name='RMSE'))
+fig_box_perf.add_trace(go.Box(y=results_df['R² Score'], name='R² Score'))
+fig_box_perf.update_layout(title='Distribution of Model Performance Metrics')
+st.plotly_chart(fig_box_perf)
+
+# 2. Feature Importances Comparison
+if any(model in filtered_results['Model'].values for model in ['Random Forest', 'XGBoost']):
+    st.subheader("Feature Importance Comparison")
+    
+    importance_data = {}
+    feature_names = []
+    
+    if 'Random Forest' in filtered_results['Model'].values:
+        importance_data['Random Forest'] = selector_rf.feature_importances_
+        feature_names = X.columns
+    
+    if 'XGBoost' in filtered_results['Model'].values:
+        importance_data['XGBoost'] = selector_xgb.feature_importances_
+        feature_names = X.columns
+    
+    fig_importance = go.Figure()
+    for model_name, importances in importance_data.items():
+        fig_importance.add_trace(go.Bar(
+            name=model_name,
+            x=feature_names,
+            y=importances
+        ))
+    
+    fig_importance.update_layout(
+        title='Feature Importance by Model',
+        xaxis_tickangle=-45,
+        barmode='group'
+    )
+    st.plotly_chart(fig_importance)
+
+# 3. Prediction Distribution
+predictions_dict = {}
+for model_name, model in filtered_models.items():
+    predictions_dict[model_name] = model.predict(X_test_final)
+
+predictions_df = pd.DataFrame(predictions_dict)
+predictions_df['Actual'] = y_test.values
+
+fig_dist = go.Figure()
+for col in predictions_df.columns:
+    fig_dist.add_trace(go.Violin(
+        y=predictions_df[col],
+        name=col,
+        box_visible=True,
+        meanline_visible=True
+    ))
+
+fig_dist.update_layout(title='Distribution of Predictions vs Actual Values')
+st.plotly_chart(fig_dist)
+
+# 4. Error Analysis
+st.subheader("Error Analysis")
+error_df = pd.DataFrame()
+for model_name in filtered_models.keys():
+    error_df[f'{model_name} Error'] = predictions_df[model_name] - predictions_df['Actual']
+
+fig_error = go.Figure()
+for col in error_df.columns:
+    fig_error.add_trace(go.Box(y=error_df[col], name=col))
+
+fig_error.update_layout(title='Prediction Error Distribution by Model')
+st.plotly_chart(fig_error)
+
+# 5. Prediction Scatter Matrix
+if len(filtered_models) > 1:
+    st.subheader("Prediction Correlation Matrix")
+    fig_scatter = px.scatter_matrix(predictions_df)
+    fig_scatter.update_layout(title='Scatter Matrix of Predictions')
+    st.plotly_chart(fig_scatter)
+
+# 6. Time Series-like Comparison
+st.subheader("Sequential Prediction Comparison")
+fig_seq = go.Figure()
+
+# Get predictions and sort them along with actual values
+predictions_and_actual = pd.DataFrame({'Actual': y_test})
+for model_name, model in filtered_models.items():
+    y_pred = model.predict(X_test_final)
+    predictions_and_actual[model_name] = y_pred
+
+# Sort by actual values
+predictions_and_actual = predictions_and_actual.sort_values('Actual')
+
+# Add traces for each model
+for model_name in filtered_models.keys():
+    fig_seq.add_trace(go.Scatter(
+        y=predictions_and_actual[model_name],
+        name=model_name,
+        mode='lines'
+    ))
+
+# Add actual values
+fig_seq.add_trace(go.Scatter(
+    y=predictions_and_actual['Actual'],
+    name='Actual',
+    mode='lines',
+    line=dict(color='black', dash='dash')
+))
+
+fig_seq.update_layout(
+    title='Sequential Prediction Comparison',
+    xaxis_title='Sorted Sample Index',
+    yaxis_title='Sleep Quality'
+)
+st.plotly_chart(fig_seq)
+
+# 7. Regression Metrics Comparison
+st.subheader("Detailed Metrics Comparison")
+
+# Calculate metrics only for filtered models
+metrics_list = []
+for model_name in filtered_results['Model']:
+    if model_name in reg_models:
+        model = reg_models[model_name]
+        y_pred = model.predict(X_test_final)
+        metrics_list.append({
+            'Model': model_name,
+            'RMSE': np.sqrt(mean_squared_error(y_test, y_pred)),  # Changed this line
+            'R² Score': r2_score(y_test, y_pred),
+            'MAE': mean_absolute_error(y_test, y_pred)
+        })
+
+metrics_comparison = pd.DataFrame(metrics_list)
+
+if not metrics_comparison.empty:
+    # Create parallel coordinates plot with numeric color scale
+    fig_metrics = px.parallel_coordinates(
+        metrics_comparison,
+        dimensions=['RMSE', 'R² Score', 'MAE'],
+        color=np.arange(len(metrics_comparison)),
+        color_continuous_scale='Viridis'
+    )
+
+    fig_metrics.update_layout(
+        title='Parallel Coordinates Plot of Model Metrics',
+        coloraxis_showscale=False
+    )
+
+    # Add model names as annotations
+    for i, model in enumerate(metrics_comparison['Model']):
+        fig_metrics.add_annotation(
+            x=-0.1,
+            y=i,
+            text=model,
+            showarrow=False,
+            xanchor='right'
+        )
+
+    st.plotly_chart(fig_metrics)
+else:
+    st.info("Please select models to compare their metrics")
