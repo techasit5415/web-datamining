@@ -16,14 +16,14 @@ file_path = "C:\\Users\\techa\\Downloads\\sleep_health_lifestyle_dataset.csv"
 df = pd.read_csv(file_path, encoding='latin1', low_memory=False)
 
 # 2. Data Preprocessing
-df = df.rename(columns={'Sleep Duration (hours)': 'Sleep Duration'})
+# df = df.rename(columns={'Sleep Duration (hours)': 'Sleep Duration'})
 df['Sleep Disorder'] = df['Sleep Disorder'].replace(np.nan, 'None')  # แก้ FutureWarning
 df = df[(df['Age'] >= 0) & (df['Age'] <= 120)]
 df = df[(df['Physical Activity Level (minutes/day)'] > 0) | (df['Daily Steps'] == 0)]
 
 # ✅ **เพิ่ม Daily Steps**
 selected_columns = [
-    'Age', 'Occupation', 'Sleep Duration', 'Physical Activity Level (minutes/day)',
+    'Age', 'Occupation',  'Physical Activity Level (minutes/day)',
     'Stress Level (scale: 1-10)', 'BMI Category', 'Blood Pressure (systolic/diastolic)',
     'Daily Steps',  # ✅ เพิ่มคอลัมน์ Daily Steps
     'Quality of Sleep (scale: 1-10)'  # Target
