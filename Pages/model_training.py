@@ -232,7 +232,6 @@ with st.spinner("Wait for it...", show_time=True):
     r2_xgb = r2_score(y_test, y_pred_xgb)
 
     # 2. LightGBM
-
     lgb_model = lgb.LGBMRegressor(n_estimators=200, learning_rate=0.05, random_state=42,verbose=-1)
     lgb_model.fit(X_train_final, y_train)
     y_pred_lgb = lgb_model.predict(X_test_final)
@@ -272,6 +271,7 @@ with st.spinner("Wait for it...", show_time=True):
 
     # แสดงผล RMSE ของแต่ละโมเดล
     results_df = pd.DataFrame({
+        
         "Model": ["XGBoost", "LightGBM", "Random Forest", "Linear Regression", "Ridge Regression", f"KNN Regression (n_neighbors={n_neighbors_value})"],
         "RMSE": [rmse_xgb, rmse_lgb, rmse_rf, rmse_lr, rmse_ridge, rmse_knn],
         "R² Score": [r2_xgb, r2_lgb, r2_rf, r2_lr, r2_ridge, r2_knn]
@@ -343,7 +343,7 @@ with st.spinner("Wait for it...", show_time=True):
         selected_models_list = st.multiselect(
             "Select models to compare:",
             list(reg_models.keys()),
-            default=list(reg_models.keys())[:2]
+        default=list(reg_models.keys())[:2]
         )
         selected_models = {model: reg_models[model] for model in selected_models_list}
 
