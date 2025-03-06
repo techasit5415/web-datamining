@@ -31,7 +31,7 @@ scaler = joblib.load(scaler_path)
 expected_columns = joblib.load(feature_columns_path)
 feature_selector = joblib.load(feature_selector_path)
 
-def predict_sleep_quality(occupation, physical_activity, stress_level, bmi_category, blood_pressure, daily_steps, model_choice):
+def predict_sleep_quality(occupation, physical_activity,  bmi_category, blood_pressure, daily_steps, model_choice):
     try:
         sys_bp, dia_bp = map(float, blood_pressure.split('/'))
     except ValueError:
@@ -41,7 +41,7 @@ def predict_sleep_quality(occupation, physical_activity, stress_level, bmi_categ
     input_data = {
         'Occupation': occupation,
         'Physical Activity Level (minutes/day)': physical_activity,
-        'Stress Level (scale: 1-10)': stress_level,
+        # 'Stress Level (scale: 1-10)': stress_level,
         'BMI Category': bmi_category,
         'Systolic BP': sys_bp,
         'Diastolic BP': dia_bp,
@@ -87,7 +87,7 @@ with st.form(key='prediction_form'):
     occupation = st.selectbox("Occupation", ("Student", "Office Worker","Retired","Manual Labor"))
     # sleep_duration = st.number_input("Sleep Duration (Hour)", min_value=0.0, max_value=24.0, value=7.0)
     physical_activity = st.number_input("Physical Activity Level (Min/Day)", min_value=1, max_value=300, value=60)
-    stress_level = st.number_input("Stress Level (Scale 1-10)", min_value=1, max_value=10, value=5)
+    # stress_level = st.number_input("Stress Level (Scale 1-10)", min_value=1, max_value=10, value=5)
     bmi_category = st.selectbox("BMI Category", ("Underweight","Normal", "Overweight","Obese"))
     blood_pressure = st.text_input("Blood Pressure (systolic/diastolic)", value="120/80")
     daily_steps = st.number_input("Daily Steps", min_value=0, value=5000)  # ✅ เพิ่มให้ถูกต้อง
@@ -99,7 +99,7 @@ if submit_button:
     progress_text = "Operation in progress. Please wait."
     my_bar = st.progress(0, text=progress_text)
     predicted_quality = predict_sleep_quality(
-        occupation, physical_activity, stress_level, bmi_category, blood_pressure, daily_steps, model_choice
+        occupation, physical_activity,  bmi_category, blood_pressure, daily_steps, model_choice
     )
     for percent_complete in range(100):
         my_bar.progress(percent_complete + 1, text=progress_text)
