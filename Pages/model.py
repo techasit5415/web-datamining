@@ -33,7 +33,7 @@ st.title("Sleep Quality Prediction Models")
 st.write("This application analyzes sleep quality data using various machine learning models.")
 
 # Wrap all data processing and model training in a spinner
-with st.spinner("Processing data and training models..."):
+with st.spinner("Processing data and training models...", show_time=True):
     # Data loading
     file_path = "C:\\Users\\techa\\Downloads\\sleep_health_lifestyle_dataset.csv"
     df = pd.read_csv(file_path, encoding='latin1', low_memory=False)
@@ -295,44 +295,69 @@ st.write("Missing Values:")
 st.write(df.isnull().sum())
 
 # Create tabs for different sections
+st.header("Model Selection")
+comparison_mode = st.radio("Comparison Mode", ["Single Model", "Multiple Models"])
+
+if comparison_mode == "Single Model":
+    selected_model = st.selectbox("Select Model", results_df['Model'].tolist())
+    filtered_results = results_df[results_df['Model'] == selected_model]
+else:
+    selected_models_list = st.multiselect("Select Models to Compare", 
+                                        results_df['Model'].tolist(),
+                                        default=results_df['Model'].tolist()[:3])
+    filtered_results = results_df[results_df['Model'].isin(selected_models_list)]
+
 tab1, tab2, tab3 = st.tabs(["Model Results", "Feature Importance", "Predictions Visualization"])
 
 with tab1:
-    st.header("Model Performance Comparison")
+    st.header("Model Results")
     
-    # Display results table
-    st.dataframe(results_df.style.highlight_max(axis=0))
+    col1, col2 = st.columns(2)
     
-    # Create bar charts using plotly
-    fig1 = go.Figure(data=[
-        go.Bar(name='RMSE', x=results_df['Model'], y=results_df['RMSE']),
-        go.Bar(name='R² Score', x=results_df['Model'], y=results_df['R² Score'])
-    ])
+    with col1:
+        st.subheader("Results Table")
+        st.dataframe(filtered_results.style.highlight_max(axis=0))
     
-    fig1.update_layout(title='Model Performance Metrics',
-                      barmode='group',
-                      xaxis_tickangle=-45)
-    st.plotly_chart(fig1)
+    with col2:
+        st.subheader("Performance Metrics")
+        fig1 = go.Figure(data=[
+            go.Bar(name='RMSE', x=filtered_results['Model'], y=filtered_results['RMSE']),
+            go.Bar(name='R² Score', x=filtered_results['Model'], y=filtered_results['R² Score'])
+        ])
+        fig1.update_layout(title='Model Performance Metrics',
+                          barmode='group',
+                          xaxis_tickangle=-45,
+                          height=400)
+        st.plotly_chart(fig1, use_container_width=True)
 
 with tab2:
     st.header("Feature Importance")
-    
-    # Display selected features
+    # Only show feature importance for selected models
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("Random Forest Features")
-        st.write(selected_features_rf)
+        if "Random Forest" in filtered_results['Model'].values:
+            st.write(selected_features_rf)
+        else:
+            st.info("Select Random Forest model to view its features")
     with col2:
         st.subheader("XGBoost Features")
-        st.write(selected_features_xgb)
+        if "XGBoost" in filtered_results['Model'].values:
+            st.write(selected_features_xgb)
+        else:
+            st.info("Select XGBoost model to view its features")
 
 with tab3:
     st.header("Predictions Visualization")
     
+    # Filter models for visualization
+    filtered_models = {k: v for k, v in reg_models.items() 
+                      if k in filtered_results['Model'].values}
+    
     # Create scatter plot for actual vs predicted
     fig2 = go.Figure()
     
-    for model_name, model in reg_models.items():
+    for model_name, model in filtered_models.items():
         y_pred = model.predict(X_test_final)
         fig2.add_trace(
             go.Scatter(x=y_test, y=y_pred,
@@ -341,7 +366,6 @@ with tab3:
                       opacity=0.6)
         )
     
-    # Add ideal line
     fig2.add_trace(
         go.Scatter(x=[y_test.min(), y_test.max()],
                   y=[y_test.min(), y_test.max()],
@@ -357,42 +381,6 @@ with tab3:
     )
     
     st.plotly_chart(fig2)
-
-    # Add line plot
-    st.subheader("Predictions Over Data Points")
-    
-    sorted_indices = y_test.argsort()
-    y_test_sorted = y_test.iloc[sorted_indices]
-    X_test_final_sorted = X_test_final[sorted_indices]
-    
-    fig3 = go.Figure()
-    
-    # Add actual values
-    fig3.add_trace(
-        go.Scatter(x=list(range(len(y_test_sorted))), 
-                  y=y_test_sorted,
-                  mode='lines',
-                  name='Actual Values',
-                  line=dict(color='black', dash='dash'))
-    )
-    
-    # Add predictions for each model
-    for model_name, model in reg_models.items():
-        y_pred = model.predict(X_test_final_sorted)
-        fig3.add_trace(
-            go.Scatter(x=list(range(len(y_pred))),
-                      y=y_pred,
-                      mode='lines',
-                      name=f'{model_name} Predictions')
-        )
-    
-    fig3.update_layout(
-        title='Predictions Comparison',
-        xaxis_title='Data Points (Sorted)',
-        yaxis_title='Values'
-    )
-    
-    st.plotly_chart(fig3)
 
 # Add cross-validation results
 st.header("Cross-validation Results")
