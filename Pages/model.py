@@ -28,7 +28,6 @@ import plotly.figure_factory as ff
 # เชื่อมต่อ Google Drive
 
 # ตั้ง path ไปยังไฟล์ที่บันทึกใน Google Drive
-file_path = "C:\\Users\\techa\\Downloads\\sleep_health_lifestyle_dataset.csv"
 
 # Add title and description
 st.title("Sleep Quality Prediction Models")
@@ -37,7 +36,7 @@ st.write("This application analyzes sleep quality data using various machine lea
 # Wrap all data processing and model training in a spinner
 with st.spinner("Processing data and training models...", show_time=True):
     # Data loading
-    file_path = "C:\\Users\\techa\\Downloads\\sleep_health_lifestyle_dataset.csv"
+    file_path = r"C:\Users\techa\OneDrive\เอกสาร\VScode\y.2\datamining\web-datamining\csv\sleep_health_lifestyle_dataset.csv"
     df = pd.read_csv(file_path, encoding='latin1', low_memory=False)
 
     # Display data overview
